@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="🍑">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MATRIXXX_TERMINAL</title>
+    <style>
+        :root {
+            --neon-primary: #00d4ff;
+        }
+
+        body {
+            --matrix-col: #00d4ff;
+            --matrix-bright: #00ffff;
+        }
+
+        body.red-alert {
+            --matrix-col: #ff2b2b;
+            --matrix-bright: #ff7777;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .matrix-rain {
+            position: fixed; inset: 0;
+            background: #000;
+            pointer-events: none;
+            z-index: 1;
+        }
+       
+        .matrix-wrapper {
+            position: absolute; top: 0; height: 100%; width: 15px;
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s;
+            will-change: transform;
+        }
+
+        .matrix-column {
+            position: absolute; top: 0; left: 0;
+            height: 100%; width: 100%;
+            font-size: 14px; line-height: 1;
+            color: var(--matrix-col);
+            text-shadow: 0 0 5px var(--matrix-col);
+            white-space: nowrap; overflow: hidden;
+            animation: matrix-fall linear infinite;
+            text-align: right;
+            transition: color 3s linear, text-shadow 3s linear;
+        }
+
+        .matrix-column span { display: block; }
+        .matrix-column .bright {
+            color: var(--matrix-bright);
+            text-shadow: 0 0 10px var(--matrix-bright);
+            transition: color 3s linear, text-shadow 3s linear;
+        }
+       
+        @keyframes matrix-fall {
+            from { transform: translateY(-100vh); }
+            to { transform: translateY(100vh); }
+        }
+
+        .crt-overlay {
+            position: fixed; inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+            background-size: 100% 3px;
+            z-index: 10; pointer-events: none;
+        }
+
+        .main-ui {
+            position: relative; z-index: 20;
+            display: flex; flex-direction: column; align-items: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .main-ui.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .glass-box {
+            padding: 60px 80px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+            border-radius: 2px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #fff; font-size: 0.8rem; letter-spacing: 15px;
+            margin: 0 0 40px 15px; opacity: 0.8;
+            text-shadow: 0 0 15px var(--neon-primary);
+        }
+
+        .btn-stack { display: flex; flex-direction: column; gap: 15px; }
+
+        .btn {
+            position: relative; background: none; border: none;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem; padding: 20px 40px;
+            cursor: pointer; width: 350px;
+            overflow: hidden; transition: color 0.3s;
+        }
+
+        .btn:hover { color: #fff; text-shadow: 0 0 10px var(--neon-primary); }
+
+        .progress {
+            position: absolute; top: 0; left: 0; height: 100%; width: 0%;
+            z-index: -1; opacity: 0.5;
+        }
+
+        .btn-blue .progress { background: var(--neon-primary); }
+        .btn-red .progress { background: #ff2b2b; }
+        .btn.holding .progress { width: 100%; transition: width 3s linear; }
+
+        #reload-line {
+            position: fixed; bottom: 30px; left: 30px;
+            color: #0f0; font-size: 0.7rem; z-index: 30;
+            opacity: 0.6; cursor: pointer;
+            transition: color 3s linear;
+        }
+
+        body.red-alert #reload-line { color: #ff2b2b; }
+
+        .cursor { display: inline-block; width: 8px; height: 15px; background: currentColor; animation: blink 0.8s infinite; vertical-align: middle; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+    </style>
+</head>
+<body>
+
+    <div class="matrix-rain" id="matrixRain"></div>
+    <div class="crt-overlay"></div>
+
+    <div class="main-ui" id="mainUI">
+        <div class="glass-box">
+            <h1>ENTER THE MATRIXXX ?</h1>
+            <div class="btn-stack">
+                <button class="btn btn-blue" data-url="https://enter.the.matri.xxx">
+                    <span class="progress"></span>
+                    i am over 18, enter the matrix
+                </button>
+                <button class="btn btn-red" id="exit">
+                    <span class="progress"></span>
+                    i am under 18, back to reality
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reload-line" onclick="location.reload()">
+        root@system:~# force_reboot_ <span class="cursor"></span>
+    </div>
+
+    <script>
+        let colsData = [];
+        let mx = -1000, my = -1000;
+
+        window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+        window.addEventListener('touchmove', e => { mx = e.touches[0].clientX; my = e.touches[0].clientY; }, {passive: true});
+        window.addEventListener('mouseleave', () => { mx = -1000; my = -1000; });
+        window.addEventListener('touchend', () => { mx = -1000; my = -1000; });
+
+        function createRain() {
+            const container = document.getElementById('matrixRain');
+            container.innerHTML = '';
+            colsData = [];
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%"#&().,;:[]^~_|{}\\?!@𝕏GROKアイウエオ';
+            const fontSize = 15;
+            const columns = Math.floor(window.innerWidth / fontSize);
+
+            for (let i = 0; i < columns; i++) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'matrix-wrapper';
+                wrapper.style.left = `${i * fontSize}px`;
+
+                const col = document.createElement('div');
+                col.className = 'matrix-column';
+                col.style.animationDuration = `${Math.random() * 5 + 5}s`;
+                col.style.animationDelay = `${Math.random() * 5}s`;
+               
+                let str = '';
+                for (let j = 0; j < 50; j++) {
+                    const char = chars[Math.floor(Math.random() * chars.length)];
+                    const isBright = Math.random() < 0.1 ? ' class="bright"' : '';
+                    str += `<span${isBright}>${char}</span>`;
+                }
+               
+                col.innerHTML = str;
+                wrapper.appendChild(col);
+                container.appendChild(wrapper);
+                colsData.push({ el: wrapper, x: i * fontSize });
+            }
+        }
+
+        function renderMagnetic() {
+            const radius = 200;
+            const maxPush = 120;
+
+            for (let i = 0; i < colsData.length; i++) {
+                const item = colsData[i];
+                const dx = mx - item.x;
+                const dist = Math.abs(dx);
+
+                if (dist < radius && mx > -1000) {
+                    const force = 1 - (dist / radius);
+                    const pushX = -Math.sign(dx) * (force * force) * maxPush;
+                    item.el.style.transform = `translate3d(${pushX}px, 0, 0) scale(${1 + force * 0.1})`;
+                    item.el.style.opacity = 1 - (force * 0.4);
+                } else {
+                    item.el.style.transform = 'translate3d(0, 0, 0) scale(1)';
+                    item.el.style.opacity = 1;
+                }
+            }
+            requestAnimationFrame(renderMagnetic);
+        }
+
+        document.querySelectorAll('.btn').forEach(btn => {
+            let timer;
+            let actionComplete = false;
+
+            const start = (e) => {
+                if (actionComplete) return;
+                e.preventDefault();
+                btn.classList.add('holding');
+               
+                if (btn.id === 'exit') {
+                    document.body.classList.add('red-alert');
+                }
+               
+                timer = setTimeout(() => {
+                    actionComplete = true;
+                    if (btn.id === 'exit') {
+                        document.getElementById('mainUI').classList.add('hidden');
+                    } else {
+                        location.href = btn.dataset.url;
+                    }
+                }, 3000);
+            };
+
+            const end = () => {
+                if (actionComplete) return;
+                btn.classList.remove('holding');
+                document.body.classList.remove('red-alert');
+                clearTimeout(timer);
+            };
+
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('touchstart', start, {passive: false});
+            btn.addEventListener('mouseup', end);
+            btn.addEventListener('mouseleave', end);
+            btn.addEventListener('touchend', end);
+        });
+
+        createRain();
+        renderMagnetic();
+       
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(createRain, 200);
+        });
+    </script>
+</body>
+</html>
