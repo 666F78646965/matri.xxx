@@ -122,13 +122,56 @@
         .btn.holding .progress { width: 100%; transition: width 3s linear; }
 
         #reload-line {
-            position: fixed; bottom: 30px; left: 30px;
+            position: fixed; top: 30px; left: 30px;
             color: #0f0; font-size: 0.7rem; z-index: 30;
             opacity: 0.6; cursor: pointer;
             transition: color 3s linear;
         }
 
         body.red-alert #reload-line { color: #ff2b2b; }
+
+        #donate-line {
+            position: fixed; bottom: 15px; left: 30px; right: 30px;
+            color: #0f0; font-size: 0.6rem; z-index: 30;
+            opacity: 0.6; display: flex; flex-direction: column; gap: 4px;
+            transition: color 3s linear;
+        }
+        
+        body.red-alert #donate-line { color: #ff2b2b; }
+        
+        .xmr-address { 
+            user-select: all;
+            cursor: text; 
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 4px;
+            word-break: break-all;
+        }
+        
+        .xmr-btn {
+            background: none; border: 1px solid currentColor; color: inherit;
+            font-size: 0.6rem; font-family: 'Courier New', monospace;
+            cursor: pointer; padding: 2px 5px; opacity: 0.8;
+            margin-left: 5px;
+            transition: opacity 0.2s, background 0.2s, color 0.2s;
+        }
+        
+        .xmr-btn:hover {
+            opacity: 1; background: currentColor; color: #000;
+        }
+
+        #qr-box {
+            position: fixed; bottom: 80px; left: 30px;
+            display: none; padding: 5px; background: rgba(0,0,0,0.9);
+            border: 1px solid #0f0; z-index: 40; box-shadow: 0 0 15px #000;
+            transition: border-color 3s linear;
+        }
+
+        body.red-alert #qr-box { border-color: #ff2b2b; }
+        
+        #xmr-qr-link {
+            display: block;
+            cursor: pointer;
+        }
 
         .cursor { display: inline-block; width: 8px; height: 15px; background: currentColor; animation: blink 0.8s infinite; vertical-align: middle; }
         @keyframes blink { 50% { opacity: 0; } }
@@ -158,6 +201,21 @@
 
     <div id="reload-line" onclick="location.reload()">
         root@system:~# force_reboot_ <span class="cursor"></span>
+    </div>
+
+    <div id="donate-line">
+        <div>
+            root@system:~# pay_xmr_ 
+            <button class="xmr-btn" onclick="copyXMR()" id="copy-btn">[COPY]</button>
+            <button class="xmr-btn" onclick="generateQR()">[QR]</button>
+        </div>
+        <div class="xmr-address" id="xmr-addr-text">888nE92WMCmGif23MMbHW3gBA3SPycwk3gi1ApadvaMAdSAcA6U6P8CU6ns82ACgMah8uB8NtejwKV9rJpgq7rCw95AjKQy</div>
+    </div>
+
+    <div id="qr-box">
+        <a id="xmr-qr-link" href="#">
+            <img id="xmr-qr-img" src="" width="120" height="120" alt="Monero QR Code">
+        </a>
     </div>
 
     <script>
@@ -268,6 +326,78 @@
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(createRain, 200);
         });
+
+        function copyXMR() {
+            const addr = document.getElementById('xmr-addr-text').innerText;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(addr)
+                    .then(showCopiedEffects)
+                    .catch(() => fallbackCopy(addr));
+            } else {
+                fallbackCopy(addr);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.width = "2em";
+            textArea.style.height = "2em";
+            textArea.style.padding = "0";
+            textArea.style.border = "none";
+            textArea.style.outline = "none";
+            textArea.style.boxShadow = "none";
+            textArea.style.background = "transparent";
+            
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopiedEffects();
+                }
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopiedEffects() {
+            const btn = document.getElementById('copy-btn');
+            const oldText = btn.innerText;
+            btn.innerText = '[COPIED]';
+            setTimeout(() => btn.innerText = oldText, 2000);
+        }
+
+        function generateQR() {
+            const qrBox = document.getElementById('qr-box');
+            if (qrBox.style.display === 'block') {
+                qrBox.style.display = 'none';
+                return;
+            }
+            
+            const amount = prompt("Set amount in XMR (or leave blank to ignore):", "");
+            if (amount === null) return;
+            
+            const addr = document.getElementById('xmr-addr-text').innerText;
+            let uri = `monero:${addr}`;
+            if (amount.trim() !== "" && !isNaN(amount)) {
+                uri += `?tx_amount=${amount.trim()}`;
+            }
+            
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=4&data=${encodeURIComponent(uri)}`;
+            document.getElementById('xmr-qr-img').src = qrUrl;
+            document.getElementById('xmr-qr-link').href = uri;
+            
+            qrBox.style.display = 'block';
+        }
     </script>
 </body>
 </html>
